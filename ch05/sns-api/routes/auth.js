@@ -117,6 +117,23 @@ router.get('/logout', isLoggedIn, async (req, res, next) => {
 })
 
 // 로그인 상태 확인 : localhost:8000/auth/status
-router.get('/status', async (req, res, next) => {})
+router.get('/status', async (req, res, next) => {
+   if (req.isAuthenticated()) {
+      // 로그인이 된 상태
+      // req.user는 passport의 역직렬화 설정에 의해 로그인 되었을 때 로그인을 한 user 정보를 가져올 수 있다.
+      res.json({
+         isAuthenticated: true,
+         user: {
+            id: req.user.id,
+            nick: req.user.nick,
+         },
+      })
+   } else {
+      // 로그인이 되지 않았을 때
+      res.json({
+         isAuthenticated: false,
+      })
+   }
+})
 
 module.exports = router
