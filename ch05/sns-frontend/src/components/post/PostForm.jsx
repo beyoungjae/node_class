@@ -3,11 +3,10 @@ import { TextField, Button, Box } from '@mui/material'
 
 // 등록, 수정 폼 컴포넌트
 const PostForm = ({ onSubmit, initialValues = {} }) => {
-   // const [imgUrl, setImgUrl] = useState(initialValues.img ? process.env.REACT_APP_API_URL + initialValues.img : '') // 이미지 경로(파일명 포함)
-   const [imgUrl, setImgUrl] = useState('')
+   const [imgUrl, setImgUrl] = useState(initialValues.img ? process.env.REACT_APP_API_URL + initialValues.img : '') // 이미지 경로(파일명 포함)
    const [imgFile, setImgFile] = useState(null) // 이미지 파일 객체
-   const [content, setContent] = useState('') // 게시물 내용
-   const [hashtags, setHashtags] = useState('') // 해시태그
+   const [content, setContent] = useState(initialValues.content || '') // 게시물 내용
+   const [hashtags, setHashtags] = useState(initialValues.Hashtags ? initialValues.Hashtags.map((tag) => `#${tag.title}`).join(' ') : '') // 해시태그
 
    // 이미지 파일 미리보기
    const handleImageChange = useCallback((e) => {
@@ -51,7 +50,8 @@ const PostForm = ({ onSubmit, initialValues = {} }) => {
             return
          }
 
-         if (!imgFile) {
+         // 수정 시 이미지 파일을 바꾸지 않을 경우를 위해 !initialValues.id 조건 추가
+         if (!imgFile && !initialValues.id) {
             alert('이미지 파일을 추가하세요.')
             return
          }
@@ -61,13 +61,23 @@ const PostForm = ({ onSubmit, initialValues = {} }) => {
          // useState와 유사하고 키 값으로 데이터를 불러올 수 있다.
          formData.append('content', content) // 게시물 내용 추가
          formData.append('hashtags', hashtags) // 해시태그 추가
-         formData.append('img', imgFile) // 이미지 파일 추가
 
-         // PostCreatePage.jsx의 handleSubmit() 함수를 실행시킴
+         // 파일명 인코딩(한글 파일명 깨짐 방지)
+         if (imgFile) {
+            const encodedFile = new File([imgFile], encodeURIComponent(imgFile.name), { type: imgFile.type })
+
+            formData.append('img', encodedFile) // 이미지 파일 추가
+         }
+
+         // 등록할때는 PostCreatePage.jsx의 handleSubmit() 함수를 실행시킴
+         // 수정할때는 PostEditPage.jsx의 handleSubmit() 함수를 실행시킴
          onSubmit(formData) // formData 객체를 전송
       },
       [content, hashtags, imgFile, onSubmit]
    )
+
+   // state변경 시 등록/수정 버튼 재연산 방지
+   const submitButtonLabel = useMemo(() => (initialValues.id ? '수정하기' : '등록하기'), [initialValues.id])
 
    return (
       <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }} encType="multipart/form-data">
@@ -91,8 +101,7 @@ const PostForm = ({ onSubmit, initialValues = {} }) => {
 
          {/* 등록 / 수정 버튼 */}
          <Button type="submit" variant="contained" color="primary" sx={{ mt: 2 }}>
-            {/* {submitButtonLabel} */}
-            등록
+            {submitButtonLabel}
          </Button>
       </Box>
    )
