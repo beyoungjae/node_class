@@ -13,7 +13,20 @@ module.exports = () => {
    passport.deserializeUser((id, done) => {
       // response 해주고 싶은 사용자 정보를 작성
       User.findOne({
-         where: { id }, // id는 직렬화에서 지정한 user_ld
+         where: { id },
+         attributes: ['id', 'nick', 'email', 'createdAt', 'updatedAt'],
+         include: [
+            {
+               model: User,
+               as: 'Followers', // 나를 팔로워하는 사람들
+               attributes: ['id', 'nick', 'email'],
+            },
+            {
+               model: User,
+               as: 'Followings', // 내가 팔로잉 하는 사람들
+               attributes: ['id', 'nick', 'email'],
+            },
+         ], // id는 직렬화에서 지정한 user_ld
       })
          .then((user) => done(null, user)) // 가져온 사용자 객체 정보를 반환
          .catch((err) => done(err)) //에러 발생시 에러 변환

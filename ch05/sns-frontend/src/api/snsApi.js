@@ -122,3 +122,36 @@ export const getPosts = async (page) => {
       throw error
    }
 }
+
+// 내 프로필 가져오기
+export const getProfile = async () => {
+   try {
+      const response = await snsApi.get(`/page/profile`)
+      return response
+   } catch (error) {
+      console.error(`API Request 오류: ${error.message}`)
+      throw error
+   }
+}
+
+// 특정 사용자 프로필 가져오기
+export const getProfileId = async (id) => {
+   try {
+      const response = await snsApi.get(`/page/profile/${id}`)
+      return response
+   } catch (error) {
+      console.error(`API Request 오류: ${error.message}`)
+      throw error
+   }
+}
+
+// 사용자를 팔로우
+export const followUser = async (id) => {
+   try {
+      const response = await snsApi.post(`/user/${id}/follow`)
+      return response
+   } catch (error) {
+      console.error(`API Request 오류: ${error.message}`)
+      throw error
+   }
+}
