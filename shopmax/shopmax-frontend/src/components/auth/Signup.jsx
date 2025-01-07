@@ -16,15 +16,27 @@ function Signup() {
 
    const validateEmail = (email) => {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      return emailRegex.test(email) // 유효성 체크의 결과를 true, false로 리턴
    }
 
    const validatePassword = (password) => {
       const passwordRegex = /^(?=.*[A-Za-z])(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/
+      return passwordRegex.test(password)
    }
 
    const handleSignup = useCallback(() => {
       if (!email.trim() || !name.trim() || !address.trim() || !password.trim() || !confirmPassword.trim()) {
          alert('모든 필드를 입력해주세요!')
+         return
+      }
+
+      if (!validateEmail(email)) {
+         alert('유효한 이메일 주소를 입력해주세요!')
+         return
+      }
+
+      if (!validatePassword(password) && validatePassword(confirmPassword)) {
+         alert('비밀번호는 8자리 이상이고, 영문자와 특수문자를 포함해야 합니다!')
          return
       }
 
