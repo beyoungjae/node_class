@@ -33,7 +33,11 @@ function App() {
          <Toolbar />
          <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/signup" element={<SignupPage />} />
+            <Route path="/signup" element={
+               <RedirectLoginRoute>
+                  <SignupPage />
+               </RedirectLoginRoute>
+            } />
             <Route
                path="/login"
                element={
