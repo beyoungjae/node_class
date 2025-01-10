@@ -1,8 +1,17 @@
 import { Container, Typography } from '@mui/material'
 import LoyaltyIcon from '@mui/icons-material/Loyalty'
 import { useState, useCallback } from 'react'
+import SearchBar from '../components/shared/SearchBar'
+import ItemSellList from '../components/item/itemSellList'
+import ItemSellDetail from '../components/item/itemSellDetail'
 
 function Home() {
+   const [searchTerm, setSearchTerm] = useState('')
+
+   const onSearch = useCallback((search) => {
+      setSearchTerm(search)
+   }, [])
+
    return (
       <Container
          maxWidth="lg"
@@ -11,10 +20,14 @@ function Home() {
             marginBottom: 13,
          }}
       >
+         <SearchBar onSearch={onSearch} />
          <Typography variant="h4" align="center" gutterBottom>
             <LoyaltyIcon sx={{ color: '#e91e63', fontSize: 35, mt: 10 }} />
             HOT SALE!
          </Typography>
+         <ItemSellList searchTerm={searchTerm}>
+            <ItemSellDetail />
+         </ItemSellList>
       </Container>
    )
 }

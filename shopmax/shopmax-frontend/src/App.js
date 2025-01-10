@@ -12,6 +12,7 @@ import Home from './pages/Home'
 import ItemCreatePage from './pages/ItemCreatePage'
 import ItemEditPage from './pages/ItemEditPage'
 import ItemListPage from './pages/ItemListPage'
+import ItemSellDatailPage from './pages/ItemSellDetailPage'
 
 import RedirectLoginRoute from './components/auth/RedirectLoginRoute'
 import AdminRoute from './components/auth/AdminRoute'
@@ -33,11 +34,14 @@ function App() {
          <Toolbar />
          <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/signup" element={
-               <RedirectLoginRoute>
-                  <SignupPage />
-               </RedirectLoginRoute>
-            } />
+            <Route
+               path="/signup"
+               element={
+                  <RedirectLoginRoute>
+                     <SignupPage />
+                  </RedirectLoginRoute>
+               }
+            />
             <Route
                path="/login"
                element={
@@ -78,6 +82,8 @@ function App() {
                   </AdminRoute>
                }
             />
+            {/* 상품 상세페이지 */}
+            <Route path="/items/detail/:id" element={<ItemSellDatailPage />} />
          </Routes>
          <Footer />
       </>
