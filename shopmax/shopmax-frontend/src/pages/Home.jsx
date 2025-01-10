@@ -3,7 +3,6 @@ import LoyaltyIcon from '@mui/icons-material/Loyalty'
 import { useState, useCallback } from 'react'
 import SearchBar from '../components/shared/SearchBar'
 import ItemSellList from '../components/item/itemSellList'
-import ItemSellDetail from '../components/item/itemSellDetail'
 
 function Home() {
    const [searchTerm, setSearchTerm] = useState('')
@@ -25,9 +24,7 @@ function Home() {
             <LoyaltyIcon sx={{ color: '#e91e63', fontSize: 35, mt: 10 }} />
             HOT SALE!
          </Typography>
-         <ItemSellList searchTerm={searchTerm}>
-            <ItemSellDetail />
-         </ItemSellList>
+         <ItemSellList searchTerm={searchTerm} />
       </Container>
    )
 }
