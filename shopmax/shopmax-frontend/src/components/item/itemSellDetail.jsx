@@ -8,21 +8,65 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useParams } from 'react-router-dom'
 import { fetchItemByIdThunk } from '../../features/itemSlice'
 import { formatWithComma } from '../../utils/priceSet'
+import { createOrderThunk } from '../../features/orderSlice'
 
 function ItemSellDetail() {
    const { id } = useParams() // item의 id
    const { item, loading, error } = useSelector((state) => state.items)
    const dispatch = useDispatch()
    const [count, setCount] = useState(1)
+   const [orderPrice, setOrderPrice] = useState(0) // 총 상품 가격
+   const [orderComplete, setOrderComplete] = useState(false) // 주문 완료 상태
 
+   // 수량 증가 시 총 가격 계산
+   // 처음에 상세 페이지 들어왔을 때 수량이 1개일때의 총 상품가격도 보여주기 위해 useEffect 사용
+   useEffect(() => {
+      if (item) {
+         // 상품이 있다면
+         setOrderPrice(item.price * count) // 상품 가격 * 수량
+      }
+   }, [item, count])
+
+   // 수량 증가
+   const handleQuantityChange = useCallback((event, value) => {
+      setCount(value)
+   }, [])
+
+   /*    
    const handleCountChange = useCallback(
       (event, value) => {
+         // 만약 (아이템과 벨류의 값이 1보다 크거나 같거나, 벨류의 값이 아이템에 들어가 있는 재고개수보다 작거나 같을 때)
          if (item && value >= 1 && value <= item.stockNumber) {
             setCount(value)
          }
       },
       [item]
-   )
+   ) 
+   */
+
+   // 상품 주문
+   const handleBuy = useCallback(() => {
+      // orderData = { items: [{ itemId: 1, count: 2 }, { itemId: 2, count: 1 }] }
+      dispatch(
+         createOrderThunk({
+            items: [
+               {
+                  itemId: `${id}`, // 상품 id
+                  count, // 상품 수량
+               },
+            ],
+         })
+      )
+         .unwrap()
+         .then(() => {
+            alert('주문이 완료되었습니다!')
+            setOrderComplete(true) // state를 바꿔서 컴포넌트 재렌더링 시 바뀐 재고가 보이도록 함
+         })
+         .catch((error) => {
+            console.error('주문 에러: ', error)
+            alert(`주문 실패: ${error}`)
+         })
+   }, [dispatch, count, id])
 
    useEffect(() => {
       dispatch(fetchItemByIdThunk(id))
@@ -74,9 +118,10 @@ function ItemSellDetail() {
                            <Alert severity="error">품절</Alert>
                         ) : (
                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '300px' }}>
-                              <NumberInput aria-label="Demo number input" placeholder="수량" value={count} min={1} max={item.stockNumber} onChange={handleCountChange} />
-                              <Typography variant="h6">총 가격: {formatWithComma(String(item.price * count))}원</Typography>
-                              <Button variant="contained" color="primary">
+                              <NumberInput aria-label="Demo number input" placeholder="수량" value={count} min={1} max={item.stockNumber} onChange={handleQuantityChange} />
+                              {/* <Typography variant="h6">총 가격: {formatWithComma(String(item.price * count))}원</Typography> */}
+                              <Typography variant="h6">총 가격: {formatWithComma(String(orderPrice))}원</Typography>
+                              <Button variant="contained" color="primary" onClick={handleBuy}>
                                  구매하기
                               </Button>
                            </Box>
