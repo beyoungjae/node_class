@@ -15,8 +15,10 @@ import ItemListPage from './pages/ItemListPage'
 import ItemSellDatailPage from './pages/ItemSellDetailPage'
 
 import RedirectLoginRoute from './components/auth/RedirectLoginRoute'
+import RedirectLogoutRoute from './components/auth/RedirectLogoutRoute'
 import AdminRoute from './components/auth/AdminRoute'
 import { Toolbar } from '@mui/material'
+import MyOrderListPage from './pages/MyOrderListPage'
 
 function App() {
    const dispatch = useDispatch()
@@ -49,6 +51,16 @@ function App() {
                   <RedirectLoginRoute>
                      <LoginPage />
                   </RedirectLoginRoute>
+               }
+            />
+            {/* 주문 내역 */}
+            <Route
+               path="/myorderlist"
+               element={
+                  // 로그아웃 상태일때는 home으로 리다이렉트
+                  <RedirectLogoutRoute>
+                     <MyOrderListPage />
+                  </RedirectLogoutRoute>
                }
             />
 

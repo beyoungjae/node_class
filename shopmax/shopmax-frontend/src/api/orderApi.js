@@ -12,3 +12,15 @@ export const createOrder = async (orderData) => {
       throw error
    }
 }
+
+// 주문 목록
+export const getOrders = async (data) => {
+   try {
+      const { page, limit, startDate, endDate } = data
+      const response = await shopmaxApi.get(`/order/list?page=${page}&limit=${limit}&startDate=${startDate}&endDate=${endDate}`)
+      return response
+   } catch (error) {
+      console.error(`API Request 오류: ${error.message}`)
+      throw error
+   }
+}

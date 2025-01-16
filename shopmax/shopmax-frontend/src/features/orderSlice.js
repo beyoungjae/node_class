@@ -14,7 +14,14 @@ export const createOrderThunk = createAsyncThunk('order/createOrder', async (ord
 })
 
 // 전체 주문목록 가져오기
-export const getOrdersThunk = createAsyncThunk('order/getOrders', async (data, { rejectWithValue }) => {})
+export const getOrdersThunk = createAsyncThunk('order/getOrders', async (data, { rejectWithValue }) => {
+   try {
+      const response = await getOrders(data)
+      return response.data
+   } catch (error) {
+      return rejectWithValue(error.response?.data?.message || '주문 목록 조회 실패')
+   }
+})
 
 //주문 취소
 export const cancelOrderThunk = createAsyncThunk('order/cancelOrder', async (id, { rejectWithValue }) => {})
@@ -42,6 +49,22 @@ const orderSlice = createSlice({
             state.loading = false
          })
          .addCase(createOrderThunk.rejected, (state, action) => {
+            state.loading = false
+            state.error = action.payload
+         })
+
+      // 주문목록
+      builder
+         .addCase(getOrdersThunk.pending, (state) => {
+            state.loading = true
+            state.error = null
+         })
+         .addCase(getOrdersThunk.fulfilled, (state, action) => {
+            state.loading = false
+            state.orders = action.payload.orders
+            state.pagination = action.payload.pagination
+         })
+         .addCase(getOrdersThunk.rejected, (state, action) => {
             state.loading = false
             state.error = action.payload
          })

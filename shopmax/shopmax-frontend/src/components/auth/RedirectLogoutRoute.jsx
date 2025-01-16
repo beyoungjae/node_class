@@ -8,7 +8,7 @@ function RedirectLogoutRoute({ children }) {
    if (loading) return null
 
    // 로그인을 안 했을 경우 로그인 페이지로 리다이렉트
-   if (isAuthenticated) {
+   if (!isAuthenticated) {
       return <Navigate to="/login" />
    }
 

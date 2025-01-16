@@ -112,4 +112,77 @@ router.post('/', isLoggedIn, async (req, res) => {
    }
 })
 
+// 주문 목록(페이징)
+// localhost:8000/order/list?page=1&limit=5&startDate=2025-01-01&endDate=2025-01-16
+router.get('/list', isLoggedIn, async (req, res) => {
+   try {
+      // 페이지 번호는 ?page=1로 요청이 오면 그 값을, 없으면 기본값 1을 사용
+      const page = parseInt(req.query.page, 10) || 1
+
+      // 한 페이지에 보여줄 항목 개수는 ?limit=5로 요청이 오면 그 값을, 없으면 기본값 5를 사용
+      const limit = parseInt(req.query.limit, 10) || 5
+
+      // (페이지 번호 - 1) * 한 페이지에 보여줄 항목 수 로 오프셋 계산
+      const offset = (page - 1) * limit
+
+      // 시작 날짜와 끝 날짜를 가져옴
+      const startDate = req.query.startDate // YYYY-MM-DD 형식 (예: 2025-01-01)
+      const endDate = req.query.endDate // YYYY-MM-DD 형식 (예: 2025-01-16)
+
+      const endDateTime = `${endDate} 23:59:59` // 년월일만 받을 시 시분초는 00:00:00으로 인식하므로 시간 변경(endDate 날짜에 주문한 내용도 검색되도록 강제적으로 23:59:59까지 가져올 수 있도록 지정함)
+
+      // 주문 내역의 총 개수를 구함
+      const count = await Order.count({
+         where: {
+            userId: req.user.id, // 주문한 사람의 id를 가져옴
+            ...(startDate && endDate ? { orderDate: { [Op.between]: [startDate, endDateTime] } } : {}), // startDate랑 endDate가 있으면? orderDate의 startDate와 endDate 사이의 값을 가져오고, 없으면 빈 값
+         },
+      })
+
+      // 실제 주문 목록을 가져오기 (페이징 처리 포함)
+      const orders = await Order.findAll({
+         where: {
+            userId: req.user.id, // 주문한 사람의 id를 가져옴
+            ...(startDate && endDate ? { orderDate: { [Op.between]: [startDate, endDateTime] } } : {}), // 날짜 검색
+         },
+         limit: parseInt(limit), // 한 페이지에 몇 개의 주문을 보여줄지
+         offset: parseInt(offset), // 페이지에 맞는 시작 위치 (이전 페이지는 건너뛰기)
+         include: [
+            {
+               model: Item, // 주문 내역에 포함된 아이템 정보도 가져옴
+               attributes: ['id', 'itemNm', 'price'], // 아이템 ID, 이름, 가격만 가져옴
+               // 교차테이블 데이터(OrderItem 테이블에서 필요한 컬럼 선택)
+               through: {
+                  attributes: ['count', 'orderPrice'], // 주문한 수량과 가격 정보 가져옴
+               },
+               include: [
+                  {
+                     model: Img, // 이미지 테이블의 정보도 가져옴
+                     attributes: ['imgUrl'], // attributes는 필요한 컬럼을 가져오는 것
+                     where: { repImgYn: 'Y' }, // 어디에서? repImgYn의 Y가 체크된, 대표이미지만 가져온다
+                  },
+               ],
+            },
+         ],
+         order: [['orderDate', 'DESC']], // 최근 주문내역이 먼저 오도록 정렬을 하는 것.
+      })
+
+      // 결과를 클라이언트에 응답
+      res.status(200).json({
+         success: true,
+         message: '주문 목록 조회 성공',
+         orders, // 조회한 주문 내역
+         pagination: {
+            totalOrder: count, // 전체 주문 내역의 개수
+            totalPages: Math.ceil(count / limit), // 전체 페이지 수 (소수점 올림)
+            currentPage: page, // 현재 페이지 번호
+            limit, // 한 페이지에 표시할 주문 개수
+         },
+      })
+   } catch (error) {
+      console.error(error)
+      res.status(500).json({ success: false, message: '주문 내역 조회 중 오류가 발생했습니다.', error })
+   }
+})
+
 module.exports = router
