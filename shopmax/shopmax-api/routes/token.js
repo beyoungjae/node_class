@@ -1,8 +1,9 @@
 const express = require('express')
 const router = express.Router()
+module.exports = router
 const jwt = require('jsonwebtoken')
 const { Domain } = require('../models')
-const { isLoggedIn } = require('./middewares')
+const { isLoggedIn } = require('./middlewares')
 
 // 토큰 발급
 router.get('/get', isLoggedIn, async (req, res) => {
@@ -72,5 +73,3 @@ router.get('/read', isLoggedIn, async (req, res) => {
       })
    }
 })
-
-module.exports = router

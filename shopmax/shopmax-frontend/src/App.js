@@ -19,6 +19,8 @@ import RedirectLogoutRoute from './components/auth/RedirectLogoutRoute'
 import AdminRoute from './components/auth/AdminRoute'
 import { Toolbar } from '@mui/material'
 import MyOrderListPage from './pages/MyOrderListPage'
+import TokenPage from './pages/TokenPage'
+import ChatPage from './pages/ChatPage'
 
 function App() {
    const dispatch = useDispatch()
@@ -63,6 +65,16 @@ function App() {
                   </RedirectLogoutRoute>
                }
             />
+            {/* 채팅 페이지 */}
+            <Route
+               path="/chat"
+               element={
+                  // 로그아웃 상태일때는 home으로 리다이렉트
+                  <RedirectLogoutRoute>
+                     <ChatPage />
+                  </RedirectLogoutRoute>
+               }
+            />
 
             {/* 상품 등록 */}
             <Route
@@ -96,6 +108,17 @@ function App() {
             />
             {/* 상품 상세페이지 */}
             <Route path="/items/detail/:id" element={<ItemSellDatailPage />} />
+
+            {/* 토큰 발급 페이지 */}
+            <Route
+               path="/token"
+               element={
+                  // 관리자가 아닐경우 home으로 리다이렉트
+                  <AdminRoute>
+                     <TokenPage />
+                  </AdminRoute>
+               }
+            />
          </Routes>
          <Footer />
       </>
