@@ -8,10 +8,55 @@ const socket = io(process.env.REACT_APP_API_URL, {
 })
 
 function Chat() {
-   const [messages, setMessages] = useState([]) // 채팅 메세지
+   const [messages, setMessages] = useState([]) // 서버에서 전달받은 채팅 메세지
    const [input, setInput] = useState('') // 입력 메세지
-   const [user, setUser] = useState(null) // 사용자
+   const [user, setUser] = useState(null) // 소켓 서버에서 전달받은 사용자의 정보
    const messagesContainerRef = useRef(null) // 메세지 컨테이너 스크롤이 항상 아래로 가게 하기 위한 ref
+
+   useEffect(() => {
+      // 소켓서버에서 사용자 정보를 얻기위해 메세지 전송
+      socket.emit('user info', 'requestUserInfo')
+
+      // 서버에서 사용자 정보 가져오기
+      socket.on('user info', (userInfo) => {
+         setUser(userInfo)
+      })
+
+      // 서버에서 메세지 수신
+      socket.on('chat message', (msg) => {
+         setMessages((prevMessages) => [...prevMessages, msg])
+      })
+
+      // 컴포넌트 언마운트 시 이벤트 제거
+      return () => {
+         socket.off('chat message')
+         socket.off('user info')
+      }
+   }, [])
+
+   useEffect(() => {
+      // 스크롤을 메세지 컨테이너의 가장 아래로 이동
+      if (messagesContainerRef.current) {
+         messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight // 스크롤을 메세지 컨테이너의 가장 아래로 이동
+      }
+   }, [messages]) // messages 상태가 변경될 때마다 실행
+
+   // 전송버튼 클릭 시
+   const sendMessage = () => {
+      if (!input.trim()) return
+
+      // 서버로 메세지 전송
+      socket.emit('chat message', input)
+      setInput('') // 입력 state 초기화
+   }
+
+   // 메세지 입력 후 엔터 클릭 시
+   const handleKeyDown = (e) => {
+      if (e.key === 'Enter') {
+         e.preventDefault() // 기본 엔터키 동작 방지(줄바꿈 방지)
+         sendMessage() // 메세지 전송
+      }
+   }
 
    return (
       <Box
