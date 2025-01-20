@@ -24,10 +24,24 @@ export const getOrdersThunk = createAsyncThunk('order/getOrders', async (data, {
 })
 
 //주문 취소
-export const cancelOrderThunk = createAsyncThunk('order/cancelOrder', async (id, { rejectWithValue }) => {})
+export const cancelOrderThunk = createAsyncThunk('order/cancelOrder', async (id, { rejectWithValue }) => {
+   try {
+      await cancelOrder(id)
+      return id
+   } catch (error) {
+      return rejectWithValue(error.response?.data?.message || '주문 취소 실패')
+   }
+})
 
 //주문 삭제
-export const deleteOrderThunk = createAsyncThunk('order/deleteOrder', async (id, { rejectWithValue }) => {})
+export const deleteOrderThunk = createAsyncThunk('order/deleteOrder', async (id, { rejectWithValue }) => {
+   try {
+      await deleteOrder(id)
+      return id
+   } catch (error) {
+      return rejectWithValue(error.response?.data?.message || '주문 삭제 실패')
+   }
+})
 
 const orderSlice = createSlice({
    name: 'order',
@@ -65,6 +79,34 @@ const orderSlice = createSlice({
             state.pagination = action.payload.pagination
          })
          .addCase(getOrdersThunk.rejected, (state, action) => {
+            state.loading = false
+            state.error = action.payload
+         })
+
+      // 주문취소
+      builder
+         .addCase(cancelOrderThunk.pending, (state) => {
+            state.loading = true
+            state.error = null
+         })
+         .addCase(cancelOrderThunk.fulfilled, (state, action) => {
+            state.loading = false
+         })
+         .addCase(cancelOrderThunk.rejected, (state, action) => {
+            state.loading = false
+            state.error = action.payload
+         })
+
+      // 주문삭제
+      builder
+         .addCase(deleteOrderThunk.pending, (state) => {
+            state.loading = true
+            state.error = null
+         })
+         .addCase(deleteOrderThunk.fulfilled, (state, action) => {
+            state.loading = false
+         })
+         .addCase(deleteOrderThunk.rejected, (state, action) => {
             state.loading = false
             state.error = action.payload
          })

@@ -11,7 +11,7 @@ import 'dayjs/locale/ko' // 한글 로케일 불러오기
 
 import React, { useState, useEffect, useCallback } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { getOrdersThunk } from '../../features/orderSlice'
+import { getOrdersThunk, cancelOrderThunk, deleteOrderThunk } from '../../features/orderSlice'
 
 function OrderList() {
    const dispatch = useDispatch()
@@ -35,13 +35,51 @@ function OrderList() {
             endDate: formattedEndDate,
          })
       )
-   }, [dispatch, page, formattedStartDate, formattedEndDate])
+   }, [dispatch, page, formattedStartDate, formattedEndDate, cancelComplete, deleteComplete])
 
    // 주문 취소
-   const handleCancelOrder = useCallback((id) => {}, [])
+   const handleCancelOrder = useCallback(
+      (id) => {
+         const result = window.confirm('주문을 취소 하시겠습니까?')
+
+         if (result) {
+            dispatch(cancelOrderThunk(id))
+               .unwrap()
+               .then(() => {
+                  setCancelComplete((prev) => !prev)
+               })
+               .catch((error) => {
+                  console.error('주문 취소 실패: ', error)
+                  alert(`주문 취소 실패! ${error}`)
+               })
+         } else {
+            return
+         }
+      },
+      [dispatch]
+   )
 
    // 주문 삭제
-   const handleDeleteOrder = useCallback((id) => {}, [])
+   const handleDeleteOrder = useCallback(
+      (id) => {
+         const result = window.confirm('주문을 삭제 하시겠습니까?')
+
+         if (result) {
+            dispatch(deleteOrderThunk(id))
+               .unwrap()
+               .then(() => {
+                  setDeleteComplete((prev) => !prev)
+               })
+               .catch((error) => {
+                  console.error('주문 삭제 실패: ', error)
+                  alert(`주문 삭제 실패! ${error}`)
+               })
+         } else {
+            return
+         }
+      },
+      [dispatch]
+   )
 
    // 날짜 데이터를 포맷
    const handleDateFilter = useCallback(() => {

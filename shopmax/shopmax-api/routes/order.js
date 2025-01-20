@@ -2,11 +2,11 @@ const express = require('express')
 const router = express.Router()
 const { sequelize } = require('../models')
 const { Order, Item, User, OrderItem, Img } = require('../models')
-const { isLoggedIn } = require('./middlewares')
+const { isLoggedIn, verifyToken } = require('./middlewares')
 const { Op } = require('sequelize')
 
 // 주문 localhost:8000/order
-router.post('/', isLoggedIn, async (req, res) => {
+router.post('/', verifyToken, isLoggedIn, async (req, res) => {
    /* ★트랜잭션 처리: 주문 처리 중 에러 발생시 차감된 재고를 복구하지 않으면 데이터가 
      불일치 상태가 되므로 트랜잭션 처리 
  
@@ -114,7 +114,7 @@ router.post('/', isLoggedIn, async (req, res) => {
 
 // 주문 목록(페이징)
 // localhost:8000/order/list?page=1&limit=5&startDate=2025-01-01&endDate=2025-01-16
-router.get('/list', isLoggedIn, async (req, res) => {
+router.get('/list', verifyToken, isLoggedIn, async (req, res) => {
    try {
       // 페이지 번호는 ?page=1로 요청이 오면 그 값을, 없으면 기본값 1을 사용
       const page = parseInt(req.query.page, 10) || 1
@@ -182,6 +182,105 @@ router.get('/list', isLoggedIn, async (req, res) => {
    } catch (error) {
       console.error(error)
       res.status(500).json({ success: false, message: '주문 내역 조회 중 오류가 발생했습니다.', error })
+   }
+})
+
+// 주문 취소
+router.post('/cancel/:id', verifyToken, isLoggedIn, async (req, res) => {
+   // sequelize.transaction()을 사용해 트랜잭션을 시작
+   const transaction = await sequelize.transaction()
+
+   try {
+      // URL 파라미터에서 주문 ID를 추출
+      const { id } = req.params
+
+      // 주어진 주문 ID에 해당하는 주문을 찾고, 관련된 OrderItem과 그에 속한 Item도 함께 가져옴
+      const order = await Order.findByPk(id, {
+         include: [
+            {
+               model: OrderItem, // 주문 항목 모델
+               include: [{ model: Item }], // 각 주문 항목에 해당하는 아이템 정보 포함
+            },
+         ],
+         transaction, // 트랜잭션을 사용해 쿼리 실행
+      })
+
+      // 주문이 없으면 오류 반환
+      if (!order) {
+         return res.status(404).json({
+            success: false,
+            message: '주문 내역이 없습니다.',
+         })
+      }
+
+      // 주문 상태가 이미 'CANCEL'이면 취소된 주문이라 400 오류 반환
+      if (order.orderStatus === 'CANCEL') {
+         return res.status(400).json({
+            success: false,
+            message: '이미 취소된 주문입니다.',
+         })
+      }
+
+      // 재고 복구: 주문된 각 아이템에 대해 재고 수량을 복구
+      for (const orderItem of order.OrderItems) {
+         const product = orderItem.Item // 주문 항목에 해당하는 아이템 정보
+
+         // 주문한 수량만큼 재고를 복구
+         product.stockNumber += orderItem.count
+
+         // 재고 변경 사항을 트랜잭션을 통해 저장
+         await product.save({ transaction })
+      }
+
+      // 주문 상태를 'CANCEL'로 변경하여 주문 취소 처리
+      order.orderStatus = 'CANCEL'
+
+      // 변경된 주문 상태를 트랜잭션을 통해 저장
+      await order.save({ transaction })
+
+      // 모든 작업이 성공했으므로 트랜잭션 커밋
+      await transaction.commit()
+
+      res.json({
+         success: true,
+         message: '주문이 성공적으로 취소되었습니다.',
+      })
+   } catch (error) {
+      // 모든 작업 중 하나라도 실패했을 경우 트랜잭션 롤백
+      await transaction.rollback()
+      console.error(error)
+      res.status(500).json({ success: false, message: '주문 취소 중 오류가 발생했습니다.', error })
+   }
+})
+
+// 주문 삭제
+router.delete('/delete/:id', verifyToken, isLoggedIn, async (req, res) => {
+   try {
+      // URL 파라미터에서 삭제할 주문의 ID를 추출
+      const { id } = req.params
+
+      // 주어진 주문 ID로 해당 주문을 데이터베이스에서 찾음
+      const order = await Order.findByPk(id)
+
+      // 만약 주문이 존재하지 않으면 오류 반환
+      if (!order) {
+         return res.status(404).json({
+            success: false,
+            message: '주문 내역이 없습니다.',
+         })
+      }
+
+      // 주문을 삭제합니다. 'CASCADE' 설정에 따라 해당 주문에 연관된 OrderItem도 함께 삭제됨
+      await Order.destroy({ where: { id: order.id } })
+
+      // 삭제가 성공적으로 이루어진 경우, 성공 메시지를 반환
+      res.json({
+         success: true,
+         message: '주문 내역이 성공적으로 삭제되었습니다.',
+      })
+   } catch (error) {
+      console.error(error)
+      res.status(500).json({ success: false, message: '주문 삭제 중 오류가 발생했습니다.', error })
    }
 })
 

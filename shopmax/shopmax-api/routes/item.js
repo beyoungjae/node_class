@@ -2,9 +2,9 @@ const express = require('express')
 const fs = require('fs')
 const path = require('path')
 const multer = require('multer')
-const { Op, where } = require('sequelize')
+const { Op } = require('sequelize')
 const router = express.Router()
-const { isAdmin } = require('./middlewares')
+const { isAdmin, verifyToken } = require('./middlewares')
 const { Item, Img } = require('../models')
 
 // uploads 폴더가 없을 경우 새로 생성
@@ -39,7 +39,7 @@ const upload = multer({
 
 // 상품 등록 localhost:8000/item
 // upload.array(값)의 매개변수 값은 input 태그의 name 값 사용, 만약, formData 사용 시 formData의 key 값 사용
-router.post('/', isAdmin, upload.array('img'), async (req, res) => {
+router.post('/', verifyToken, isAdmin, upload.array('img'), async (req, res) => {
    try {
       // 업로드된 파일 확인
       if (!req.files) {
@@ -92,7 +92,7 @@ router.post('/', isAdmin, upload.array('img'), async (req, res) => {
 // localhost:8000/item?page=1&limit=3&sellCategory=SELL&searchTerm=가방&searchCategory=itemNm => 판매중인 상품에서 상품명 '가방' 검색
 
 // localhost:8000/item?page=1&limit=3&sellCategory=SOLD_OUT&searchTerm=가방&searchCategory=itemDetail => 품절 상품에서 상품명 '가방' 검색
-router.get('/', async (req, res) => {
+router.get('/', verifyToken, async (req, res) => {
    try {
       const page = parseInt(req.query.page, 10) || 1
       const limit = parseInt(req.query.limit, 10) || 5
@@ -170,7 +170,7 @@ router.get('/', async (req, res) => {
 })
 
 // 상품 삭제 localhost:8000/item/:id
-router.delete('/:id', isAdmin, async (req, res) => {
+router.delete('/:id', verifyToken, isAdmin, async (req, res) => {
    try {
       const { id } = req.params // 상품 id
 
@@ -198,7 +198,7 @@ router.delete('/:id', isAdmin, async (req, res) => {
 })
 
 // 특정 상품 불러오기(id로 상품 조회)
-router.get('/:id', async (req, res) => {
+router.get('/:id', verifyToken, async (req, res) => {
    try {
       const { id } = req.params
 
@@ -231,7 +231,7 @@ router.get('/:id', async (req, res) => {
 })
 
 // 상품 수정
-router.put('/:id', isAdmin, upload.array('img'), async (req, res) => {
+router.put('/:id', verifyToken, isAdmin, upload.array('img'), async (req, res) => {
    try {
       const { id } = req.params
 
